@@ -1,0 +1,37 @@
+trigger: none
+
+resources:
+  containers:
+  - container: agent_container
+    image: microsoft/dotnet:2.1-sdk
+#    options: -e "Cache__Host=redis" -e "ConnectionStrings__Products=Server=sqlserver;User Id=sa;Password=StrongPassw0rd;Initial Catalog=FunctionalTests;MultipleActiveResultSets=true"
+  - container: sqlserver
+    image: microsoft/mssql-server-linux
+    options: -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=StrongPassw0rd"
+    ports:
+      - 1433:1433
+  - container: redis
+    image: redis:alpine
+    ports:
+      - 6379:6379
+ 
+pool: penguins
+#  vmImage: 'ubuntu-16.04'
+ 
+container: agent_container
+ 
+services:
+  sqlserver: sqlserver
+  redis_cache: redis
+ 
+steps:
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet restore'
+  inputs:
+    command: restore
+    projects: '**/FunctionalTests.csproj'
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet test'
+  inputs:
+    command: test
+    projects: '**/FunctionalTests.csproj'

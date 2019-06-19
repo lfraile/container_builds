@@ -1,0 +1,47 @@
+trigger: none
+
+resources:
+  containers:
+  - container: sqlserver
+    image: microsoft/mssql-server-linux
+    options: -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=StrongPassw0rd"
+    ports:
+      - 1433:1433
+  - container: redislatest
+    image: redis:alpine
+    ports:
+      - 6379:6379
+  - container: redis4
+    image: redis:4.0.13-alpine
+    ports:
+      - 6379:6379
+ 
+pool: penguins
+#  vmImage: 'ubuntu-16.04'
+
+strategy:
+  matrix:
+    redislatest:
+      redisService: redisLatest
+    redis4:
+      redisService: redis4
+ 
+services:
+  sqlserver: sqlserver
+  redis: $[ variables['redisService'] ]
+ 
+steps:
+- task: DotNetCoreInstaller@0
+  displayName: 'Use .NET Core sdk 2.1.505'
+  inputs:
+    version: 2.1.505
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet restore'
+  inputs:
+    command: restore
+    projects: '**/FunctionalTests.csproj'
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet test'
+  inputs:
+    command: test
+    projects: '**/FunctionalTests.csproj'
